@@ -305,7 +305,96 @@ async function run() {
         })
 
 
+        // PAYPAL
+        // Add your credentials:
+        // Add your client ID and secret
+        const CLIENT = process.env.PAYPAL_CLIENT_ID;
+        const SECRET = process.env.PAYPAL_SECRET_ID;
 
+        const PAYPAL_API = 'https://api-m.sandbox.paypal.com';
+
+
+
+        app.get('/my-api/create-payment', (req, res) => {
+            const paymentInfo = req.body
+            amount = paymentInfo.total * 100;
+            // res.send(process.env.PAYPAL_CLIENT_ID)
+            request.post(PAYPAL_API + '/v1/payments/payment',
+                {
+                    auth:
+                    {
+                        user: CLIENT,
+                        pass: SECRET
+                    },
+                    body:
+                    {
+                        intent: 'sale',
+                        payer:
+                        {
+                            payment_method: 'paypal'
+                        },
+                        transactions: [
+                            {
+                                amount:
+                                {
+                                    total: amount,
+                                    currency: 'gbp'
+                                }
+                            }
+                        ],
+                    },
+                    json: true
+                }, function (err, response) {
+                    if (err) {
+                        console.error(err);
+                        return res.sendStatus(500);
+                    }
+                    // 3. Return the payment ID to the client
+                    res.json(
+                        {
+                            id: response.body.id
+                        })
+                })
+                .post('/my-api/execute-payment/', function (req, res) {
+                    // 2. Get the payment ID and the payer ID from the request body.
+                    var paymentID = req.body.paymentID;
+                    var payerID = req.body.payerID;
+                    // 3. Call /v1/payments/payment/PAY-XXX/execute to finalize the payment.
+                    request.post(PAYPAL_API + '/v1/payments/payment/' + paymentID +
+                        '/execute',
+                        {
+                            auth:
+                            {
+                                user: CLIENT,
+                                pass: SECRET
+                            },
+                            body:
+                            {
+                                payer_id: payerID,
+                                transactions: [
+                                    {
+                                        amount:
+                                        {
+                                            total: amount,
+                                            currency: 'USD'
+                                        }
+                                    }]
+                            },
+                            json: true
+                        },
+                        function (err, response) {
+                            if (err) {
+                                console.error(err);
+                                return res.sendStatus(500);
+                            }
+                            // 4. Return a success response to the client
+                            res.json(
+                                {
+                                    status: 'success'
+                                });
+                        });
+                })
+        })
         // const { Collections } = momo.create({
         //     callbackHost: process.env.CALLBACK_HOST
         // });
