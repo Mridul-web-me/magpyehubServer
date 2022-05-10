@@ -114,26 +114,26 @@ async function run() {
         })
 
         // UPDATE API
-        app.put('/users/:_id', async (req, res) => {
-            const id = req.params._id;
-            const updatedUser = req.body;
-            const filter = { _id: ObjectId(id) };
-            const options = { upsert: true };
-            const updateDoc = {
-                $set: {
-                    name: updatedUser.name,
-                    email: updatedUser.email,
-                    phone: updatedUser.phone,
-                    address1: updatedUser.address1,
-                    address2: updatedUser.address2,
-                    telephone: updatedUser.telephone,
-                    country: updatedUser.country,
-                    postcode: updatedUser.postcode,
-                },
-            };
-            const result = await usersCollection.updateOne(filter, updateDoc, options)
-            res.json(result);
-        })
+        // app.put('/users/:_id', async (req, res) => {
+        //     const id = req.params._id;
+        //     const updatedUser = req.body;
+        //     const filter = { _id: ObjectId(id) };
+        //     const options = { upsert: true };
+        //     const updateDoc = {
+        //         $set: {
+        //             name: updatedUser.name,
+        //             email: updatedUser.email,
+        //             phone: updatedUser.phone,
+        //             address1: updatedUser.address1,
+        //             address2: updatedUser.address2,
+        //             telephone: updatedUser.telephone,
+        //             country: updatedUser.country,
+        //             postcode: updatedUser.postcode,
+        //         },
+        //     };
+        //     const result = await usersCollection.updateOne(filter, updateDoc, options)
+        //     res.json(result);
+        // })
 
         // Post Order api
 
@@ -206,11 +206,12 @@ async function run() {
             res.send(result);
         })
 
-        app.get('/users', async (req, res) => {
+        app.get('/users', verifyToken, async (req, res) => {
             const email = req.query.email;
-            console.log(email);
+
+            // console.log(email);
             const query = { email: email }
-            console.log(query);
+            // console.log(query);
             if (email) {
                 cursor = usersCollection.find(query)
                 user = await cursor.toArray()
@@ -221,6 +222,8 @@ async function run() {
                 user = await cursor.toArray();
                 res.json(user)
             }
+
+
         })
 
         app.get('/users/:email', async (req, res) => {
@@ -235,12 +238,14 @@ async function run() {
             res.json({ admin: isAdmin })
         })
 
-        app.put('/users/admin', verifyToken, async (req, res) => {
-            const email = req.body;
-            console.log('put', email)
+        app.put('/users/admin', async (req, res) => {
+            const email = req.body.email;
+            // console.log('put', email)
             const filter = { email: email };
-            console.log(filter)
-            const updateDoc = { $set: { role: 'admin' } };
+            // console.log(filter)
+            const updateDoc = {
+                $set: { role: 'admin' }
+            };
             const result = await usersCollection.updateOne(filter, updateDoc);
             res.json(result);
 
@@ -274,21 +279,67 @@ async function run() {
             res.json(result);
         });
 
+        app.put('/products/:_id', async (req, res) => {
+            const id = req.params._id;
+            const updatedPrice = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    price: updatedPrice.price
+                },
+            };
+            const result = await productsCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+        });
+        app.put('/products/title/:_id', async (req, res) => {
+            const id = req.params._id;
+            const updatedTitle = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    title: updatedTitle.title
+                },
+            };
+            const result = await productsCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+        });
+        app.put('/users/:_id', async (req, res) => {
+            const id = req.params._id;
+            const updated = req.body;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    phone: updated.phone,
+                    country: updated.country
+                },
+            };
+            const result = await usersCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+        });
+
         app.get('/orders', verifyToken, async (req, res) => {
             const email = req.query.email;
-            console.log(email);
-            const query = { email: email }
-            console.log(query);
-            if (email) {
-                cursor = ordersCollection.find(query)
-                order = await cursor.toArray()
-                res.json(order)
-            } else {
-                cursor = ordersCollection.find({})
-                order = await cursor.toArray();
-                res.json(order)
+            const query = { email: email };
+            console.log(email)
+            const user = await usersCollection.findOne(query);
+            if (req.decodedUser === email) {
+                const query = { email: email }
+                if (email) {
+                    cursor = ordersCollection.find(query)
+                    order = await cursor.toArray()
+                    res.json(order)
+                } else {
+                    cursor = ordersCollection.find({})
+                    order = await cursor.toArray();
+                    res.json(order)
+                }
             }
-
+            else {
+                res.status(401)
+            }
         })
 
 
@@ -308,93 +359,94 @@ async function run() {
         // PAYPAL
         // Add your credentials:
         // Add your client ID and secret
-        const CLIENT = process.env.PAYPAL_CLIENT_ID;
-        const SECRET = process.env.PAYPAL_SECRET_ID;
 
-        const PAYPAL_API = 'https://api-m.sandbox.paypal.com';
+        // const CLIENT = process.env.PAYPAL_CLIENT_ID;
+        // const SECRET = process.env.PAYPAL_SECRET_ID;
+
+        // const PAYPAL_API = 'https://api-m.sandbox.paypal.com';
 
 
 
-        app.get('/my-api/create-payment', (req, res) => {
-            const paymentInfo = req.body
-            amount = paymentInfo.total * 100;
-            // res.send(process.env.PAYPAL_CLIENT_ID)
-            request.post(PAYPAL_API + '/v1/payments/payment',
-                {
-                    auth:
-                    {
-                        user: CLIENT,
-                        pass: SECRET
-                    },
-                    body:
-                    {
-                        intent: 'sale',
-                        payer:
-                        {
-                            payment_method: 'paypal'
-                        },
-                        transactions: [
-                            {
-                                amount:
-                                {
-                                    total: amount,
-                                    currency: 'gbp'
-                                }
-                            }
-                        ],
-                    },
-                    json: true
-                }, function (err, response) {
-                    if (err) {
-                        console.error(err);
-                        return res.sendStatus(500);
-                    }
-                    // 3. Return the payment ID to the client
-                    res.json(
-                        {
-                            id: response.body.id
-                        })
-                })
-                .post('/my-api/execute-payment/', function (req, res) {
-                    // 2. Get the payment ID and the payer ID from the request body.
-                    var paymentID = req.body.paymentID;
-                    var payerID = req.body.payerID;
-                    // 3. Call /v1/payments/payment/PAY-XXX/execute to finalize the payment.
-                    request.post(PAYPAL_API + '/v1/payments/payment/' + paymentID +
-                        '/execute',
-                        {
-                            auth:
-                            {
-                                user: CLIENT,
-                                pass: SECRET
-                            },
-                            body:
-                            {
-                                payer_id: payerID,
-                                transactions: [
-                                    {
-                                        amount:
-                                        {
-                                            total: amount,
-                                            currency: 'USD'
-                                        }
-                                    }]
-                            },
-                            json: true
-                        },
-                        function (err, response) {
-                            if (err) {
-                                console.error(err);
-                                return res.sendStatus(500);
-                            }
-                            // 4. Return a success response to the client
-                            res.json(
-                                {
-                                    status: 'success'
-                                });
-                        });
-                })
-        })
+        // app.get('/my-api/create-payment', (req, res) => {
+        //     const paymentInfo = req.body
+        //     amount = paymentInfo.total * 100;
+        //     // res.send(process.env.PAYPAL_CLIENT_ID)
+        //     request.post(PAYPAL_API + '/v1/payments/payment',
+        //         {
+        //             auth:
+        //             {
+        //                 user: CLIENT,
+        //                 pass: SECRET
+        //             },
+        //             body:
+        //             {
+        //                 intent: 'sale',
+        //                 payer:
+        //                 {
+        //                     payment_method: 'paypal'
+        //                 },
+        //                 transactions: [
+        //                     {
+        //                         amount:
+        //                         {
+        //                             total: amount,
+        //                             currency: 'gbp'
+        //                         }
+        //                     }
+        //                 ],
+        //             },
+        //             json: true
+        //         }, function (err, response) {
+        //             if (err) {
+        //                 console.error(err);
+        //                 return res.sendStatus(500);
+        //             }
+        //             // 3. Return the payment ID to the client
+        //             res.json(
+        //                 {
+        //                     id: response.body.id
+        //                 })
+        //         })
+        //         .post('/my-api/execute-payment/', function (req, res) {
+        //             // 2. Get the payment ID and the payer ID from the request body.
+        //             var paymentID = req.body.paymentID;
+        //             var payerID = req.body.payerID;
+        //             // 3. Call /v1/payments/payment/PAY-XXX/execute to finalize the payment.
+        //             request.post(PAYPAL_API + '/v1/payments/payment/' + paymentID +
+        //                 '/execute',
+        //                 {
+        //                     auth:
+        //                     {
+        //                         user: CLIENT,
+        //                         pass: SECRET
+        //                     },
+        //                     body:
+        //                     {
+        //                         payer_id: payerID,
+        //                         transactions: [
+        //                             {
+        //                                 amount:
+        //                                 {
+        //                                     total: amount,
+        //                                     currency: 'USD'
+        //                                 }
+        //                             }]
+        //                     },
+        //                     json: true
+        //                 },
+        //                 function (err, response) {
+        //                     if (err) {
+        //                         console.error(err);
+        //                         return res.sendStatus(500);
+        //                     }
+        //                     // 4. Return a success response to the client
+        //                     res.json(
+        //                         {
+        //                             status: 'success'
+        //                         });
+        //                 });
+        //         })
+        // })
         // const { Collections } = momo.create({
         //     callbackHost: process.env.CALLBACK_HOST
         // });
