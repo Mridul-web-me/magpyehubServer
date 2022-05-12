@@ -26,5 +26,11 @@
   "engines": {
     "node": "0.10.41",
     "npm": "1.4.29"
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/404.js"
+    }
+  ]
 }

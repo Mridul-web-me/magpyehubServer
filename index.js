@@ -16,6 +16,9 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET)
 const port = process.env.PORT || 5000;
 
 
+module.exports = (req, res) => {
+    res.status(404).json({ message: 'Not Found' });
+};
 
 
 //FIREBASE ADMIN INITIALIZATION
@@ -351,6 +354,17 @@ async function run() {
                 currency: 'gbp',
                 amount: amount,
                 payment_method_types: ['card'],
+            });
+            res.json({ clientSecret: paymentIntent.client_secret })
+        })
+
+        app.post('/my-api/create-payment', async (req, res) => {
+            const paymentInfo = req.body;
+            const amount = paymentInfo.total * 100;
+            const paymentIntent = await paypal.paymentIntents.create({
+                currency: 'gbp',
+                amount: amount,
+                payment_method_types: ['paypal'],
             });
             res.json({ clientSecret: paymentIntent.client_secret })
         })
