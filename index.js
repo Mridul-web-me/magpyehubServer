@@ -358,16 +358,18 @@ async function run() {
             res.json({ clientSecret: paymentIntent.client_secret })
         })
 
-        app.post('/my-api/create-payment', async (req, res) => {
-            const paymentInfo = req.body;
-            const amount = paymentInfo.total * 100;
-            const paymentIntent = await paypal.paymentIntents.create({
-                currency: 'gbp',
-                amount: amount,
-                payment_method_types: ['paypal'],
-            });
-            res.json({ clientSecret: paymentIntent.client_secret })
-        })
+        // app.post('/my-api/create-payment', async (req, res) => {
+        //     const paymentInfo = req.body;
+        //     const amount = paymentInfo.total * 100;
+        //     const paymentIntent = await paypal.paymentIntents.create({
+        //         currency: 'gbp',
+        //         amount: amount,
+        //         payment_method_types: ['paypal'],
+        //     });
+        //     res.json({ clientSecret: paymentIntent.client_secret })
+        // })
+
+
 
 
         // PAYPAL
